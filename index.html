@@ -1,8 +1,9 @@
+<!-- original-upload-path: /mnt/data/Listing Creation Automation Master -FORMAT.xlsx -->
 <!doctype html>
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Excel -> GitHub Webform (Full)</title>
+  <title>Excel -> GitHub Webform (Full) - GitHub Inputs Hidden</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:18px;max-width:980px}
@@ -18,6 +19,9 @@
     code{background:#f4f4f5;padding:2px 4px;border-radius:4px}
     .btn-ghost{background:#eee;color:#222}
     .entry{border:1px solid #ddd;padding:8px;border-radius:6px;margin-top:8px}
+
+    /* HIDE GitHub config UI while keeping inputs in DOM for internal use */
+    #gh-card, #gh-note { display: none !important; }
   </style>
 </head>
 <body>
@@ -30,9 +34,9 @@
 -->
 
 <h1>Excel → GitHub Webform (with Sign-up & Approval)</h1>
-<div class="small muted">Everything is GitHub-only. For testing paste a GitHub Personal Access Token (PAT) with `repo` scope. Keep repo private in production.</div>
+<div id="gh-note" class="small muted">Everything is GitHub-only. For testing paste a GitHub Personal Access Token (PAT) with `repo` scope. Keep repo private in production.</div>
 
-<div class="card">
+<div class="card" id="gh-card">
   <label>GitHub owner / org (your username)</label>
   <input id="gh-owner" type="text" placeholder="your-github-username-or-org" />
 
@@ -127,10 +131,10 @@
   async function sha256Hex(str){ const utf = new TextEncoder().encode(str); const hash = await crypto.subtle.digest('SHA-256', utf); return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
 
   function ownerRepoCheck(){
-    const owner = qs('#gh-owner').value.trim();
-    const repo = qs('#gh-repo').value.trim();
-    const token = qs('#gh-token').value.trim();
-    if(!owner || !repo || !token) throw new Error('Set GitHub owner, repo and PAT at top.');
+    const owner = qs('#gh-owner')?.value?.trim() || '';
+    const repo = qs('#gh-repo')?.value?.trim() || '';
+    const token = qs('#gh-token')?.value?.trim() || '';
+    if(!owner || !repo || !token) throw new Error('Set GitHub owner, repo and PAT in hidden fields (or reveal GitHub settings).');
     return { owner, repo, token };
   }
 
@@ -177,9 +181,10 @@
     hide('#auth-status');
     const emailEl = qs('#auth-email');
     const email = (emailEl.value || '').trim().toLowerCase();
-    const token = qs('#gh-token').value.trim();
+    const token = qs('#gh-token')?.value?.trim() || '';
     if(!email || !email.includes('@')) { show('#auth-status','Enter a valid email',true); return; }
-    if(!token) { show('#auth-status','Enter PAT at top (testing only)',true); return; }
+    // token may be empty if you plan to only use local features; show a friendly message
+    if(!token) { /* don't force showing PAT - keep signup flow available */ }
     qs('#auth-area').innerHTML = 'Checking account...';
     try{
       const path = `data/users/${encodeURIComponent(email)}.json`;
@@ -374,9 +379,9 @@
 
   // helper to check owner/repo/token set
   function ownerRepoCheck(){
-    const owner = qs('#gh-owner').value.trim();
-    const repo = qs('#gh-repo').value.trim();
-    const token = qs('#gh-token').value.trim();
+    const owner = qs('#gh-owner')?.value?.trim() || '';
+    const repo = qs('#gh-repo')?.value?.trim() || '';
+    const token = qs('#gh-token')?.value?.trim() || '';
     if(!owner || !repo || !token) throw new Error('Enter GitHub owner, repo and PAT at top.');
     return { owner, repo, token };
   }
