@@ -1,13 +1,194 @@
 <!doctype html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <title>Excel Minimal Dashboard</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="utf-8" />
+  <title>Excel -> GitHub Webform (Simple)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:18px;max-width:900px}
+    label{display:block;margin-top:10px;font-weight:600}
+    input[type=text], input[type=password], textarea, select{width:100%;padding:8px;margin-top:6px;border:1px solid #ddd;border-radius:6px}
+    button{margin-top:12px;padding:10px 14px;border-radius:8px;border:0;background:#0b6df0;color:#fff;cursor:pointer}
+    .muted{color:#666;font-size:13px}
+    .row{display:flex;gap:10px}
+    .col{flex:1}
+    .status{margin-top:10px;padding:8px;border-radius:6px;background:#f3f4f6}
+    code{background:#f4f4f5;padding:2px 4px;border-radius:4px}
+  </style>
+</head>
+<body>
+
+<!--
+This form was generated from the Excel file:
+  /mnt/data/Listing Creation Automation Master -FORMAT.xlsx
+Headers used (from row 2 of the sheet):
+- Comp Brand Name*
+- Comp Store Name*
+- SKU*
+- Comp DESIGN/TYPE
+- ASIN*
+- Link*
+- ASIN REV*
+- Variation?*
+- LISTING REV*
+- Comp RANK*
+- Product Short Name*
+- Price*
+- Coupon %*
+- Coupon PRICE*
+- Price After Coupon*
+- Junior Listing Owner*
+- Senior Listing Owner*
+-->
+
+<h1>Simple Webform — saves to GitHub (JSON)</h1>
+<p class="muted">No servers. Everything uses the GitHub REST API directly. For testing, paste a GitHub Personal Access Token (repo access) below. We'll remove this later when we switch to OAuth/GitHub App.</p>
+
+<div style="border:1px solid #eee;padding:12px;border-radius:8px">
+  <label>GitHub owner / org (your username)</label>
+  <input id="gh-owner" type="text" placeholder="your-github-username-or-org" />
+
+  <label>Repository name</label>
+  <input id="gh-repo" type="text" placeholder="your-repo" />
+
+  <label>Personal Access Token (for testing only)</label>
+  <input id="gh-token" type="password" placeholder="paste a token with repo access" />
+  <div class="muted">Token is stored in memory only while the page is open.</div>
+</div>
+
+<form id="data-form" style="margin-top:14px">
+  <!-- Form fields generated from your Excel headers -->
+  <label>Comp Brand Name*</label>
+  <input name="Comp Brand Name*" type="text" />
+
+  <label>Comp Store Name*</label>
+  <input name="Comp Store Name*" type="text" />
+
+  <label>SKU*</label>
+  <input name="SKU*" type="text" />
+
+  <label>Comp DESIGN/TYPE</label>
+  <input name="Comp DESIGN/TYPE" type="text" />
+
+  <label>ASIN*</label>
+  <input name="ASIN*" type="text" />
+
+  <label>Link*</label>
+  <input name="Link*" type="text" />
+
+  <label>ASIN REV*</label>
+  <input name="ASIN REV*" type="text" />
+
+  <label>Variation?*</label>
+  <input name="Variation?*" type="text" />
+
+  <label>LISTING REV*</label>
+  <input name="LISTING REV*" type="text" />
+
+  <label>Comp RANK*</label>
+  <input name="Comp RANK*" type="text" />
+
+  <label>Product Short Name*</label>
+  <input name="Product Short Name*" type="text" />
+
+  <label>Price*</label>
+  <input name="Price*" type="text" />
+
+  <label>Coupon %*</label>
+  <input name="Coupon %*" type="text" />
+
+  <label>Coupon PRICE*</label>
+  <input name="Coupon PRICE*" type="text" />
+
+  <label>Price After Coupon*</label>
+  <input name="Price After Coupon*" type="text" />
+
+  <label>Junior Listing Owner*</label>
+  <input name="Junior Listing Owner*" type="text" />
+
+  <label>Senior Listing Owner*</label>
+  <input name="Senior Listing Owner*" type="text" />
+
+  <div class="row">
+    <div class="col">
+      <button id="submit-btn" type="button">Submit (save to GitHub)</button>
+    </div>
+    <div class="col muted" style="align-self:center">
+      <div>Saved files go to: <code>data/entries/&lt;timestamp&gt;-&lt;slug&gt;.json</code></div>
+    </div>
+  </div>
+</form>
+
+<div id="status" class="status" style="display:none"></div>
+
+<script>
+(function(){
+  // helpers
+  function el(selector){return document.querySelector(selector)}
+  function showStatus(msg, isError){ const s=el('#status'); s.style.display='block'; s.style.background=isError? '#ffecec' : '#eef7ff'; s.textContent=msg; }
+  function slugify(s){ return (s||'entry').toString().toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+  function nowTs(){ return new Date().toISOString().replace(/[:.]/g,'-') }
+
+  async function submit() {
+    const owner = el('#gh-owner').value.trim();
+    const repo = el('#gh-repo').value.trim();
+    const token = el('#gh-token').value.trim();
+
+    if(!owner || !repo || !token){ showStatus('Please enter GitHub owner, repo and token.', true); return; }
+
+    // collect form values
+    const form = document.getElementById('data-form');
+    const data = {};
+    Array.from(form.elements).forEach(inp => {
+      if(!inp.name) return;
+      data[inp.name] = inp.value || '';
+    });
+
+    // filename and path
+    const title = data['Product Short Name*'] || data['Comp Brand Name*'] || 'entry';
+    const filename = nowTs() + '-' + slugify(title) + '.json';
+    const path = 'data/entries/' + filename;
+
+    // payload
+    const payload = { _meta:{ createdAt: new Date().toISOString(), createdBy: data['Junior Listing Owner*'] || '' }, data };
+
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
+
+    const url = 'https://api.github.com/repos/' + encodeURIComponent(owner) + '/' + encodeURIComponent(repo) + '/contents/' + encodeURIComponent(path);
+
+    showStatus('Saving to GitHub: ' + path + ' ...');
+    try {
+      const res = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          Authorization: 'token ' + token,
+          Accept: 'application/vnd.github.v3+json'
+        },
+        body: JSON.stringify({
+          message: 'Add entry: ' + title,
+          content: content
+        })
+      });
+      const txt = await res.text();
+      if(!res.ok){
+        // show GitHub error
+        let err = txt;
+        try { err = JSON.parse(txt).message || txt } catch(e){}
+        showStatus('GitHub error: ' + err, true);
+        return;
+      }
+      const j = JSON.parse(txt);
+      showStatus('Saved. Commit: ' + (j.commit && j.commit.sha ? j.commit.sha : 'unknown'));
+      // clear form (keep junior name)
+      const junior = data['Junior Listing Owner*'];
+      Array.from(form.elements).forEach(inp => { if(inp.name) inp.value = (inp.name === 'Junior Listing Owner*' ? junior : '') });
+    } catch (err) {
+      showStatus('Network/other error: ' + err.message, true);
+    }
+  }
+
+  el('#submit-btn').addEventListener('click', submit);
+})();
+</script>
+</body>
 </html>
