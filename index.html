@@ -2,10 +2,10 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Excel -> GitHub Webform (Simple)</title>
+  <title>Excel -> GitHub Webform (Full)</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:18px;max-width:900px}
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:18px;max-width:980px}
     label{display:block;margin-top:10px;font-weight:600}
     input[type=text], input[type=password], textarea, select{width:100%;padding:8px;margin-top:6px;border:1px solid #ddd;border-radius:6px}
     button{margin-top:12px;padding:10px 14px;border-radius:8px;border:0;background:#0b6df0;color:#fff;cursor:pointer}
@@ -13,38 +13,26 @@
     .row{display:flex;gap:10px}
     .col{flex:1}
     .status{margin-top:10px;padding:8px;border-radius:6px;background:#f3f4f6}
+    .card{border:1px solid #eee;padding:12px;border-radius:8px;margin-top:12px}
+    .small{font-size:13px;color:#555}
     code{background:#f4f4f5;padding:2px 4px;border-radius:4px}
+    .btn-ghost{background:#eee;color:#222}
+    .entry{border:1px solid #ddd;padding:8px;border-radius:6px;margin-top:8px}
   </style>
 </head>
 <body>
 
-<!--
-This form was generated from the Excel file:
-  /mnt/data/Listing Creation Automation Master -FORMAT.xlsx
-Headers used (from row 2 of the sheet):
-- Comp Brand Name*
-- Comp Store Name*
-- SKU*
-- Comp DESIGN/TYPE
-- ASIN*
-- Link*
-- ASIN REV*
-- Variation?*
-- LISTING REV*
-- Comp RANK*
-- Product Short Name*
-- Price*
-- Coupon %*
-- Coupon PRICE*
-- Price After Coupon*
-- Junior Listing Owner*
-- Senior Listing Owner*
+<!-- Note: Excel used to derive these headers:
+     /mnt/data/Listing Creation Automation Master -FORMAT.xlsx
+     Headers (row 2): Comp Brand Name*, Comp Store Name*, SKU*, Comp DESIGN/TYPE,
+     ASIN*, Link*, ASIN REV*, Variation?*, LISTING REV*, Comp RANK*, Product Short Name*,
+     Price*, Coupon %*, Coupon PRICE*, Price After Coupon*, Junior Listing Owner*, Senior Listing Owner*
 -->
 
-<h1>Simple Webform — saves to GitHub (JSON)</h1>
-<p class="muted">No servers. Everything uses the GitHub REST API directly. For testing, paste a GitHub Personal Access Token (repo access) below. We'll remove this later when we switch to OAuth/GitHub App.</p>
+<h1>Excel → GitHub Webform (with Sign-up & Approval)</h1>
+<div class="small muted">Everything is GitHub-only. For testing paste a GitHub Personal Access Token (PAT) with `repo` scope. Keep repo private in production.</div>
 
-<div style="border:1px solid #eee;padding:12px;border-radius:8px">
+<div class="card">
   <label>GitHub owner / org (your username)</label>
   <input id="gh-owner" type="text" placeholder="your-github-username-or-org" />
 
@@ -53,141 +41,348 @@ Headers used (from row 2 of the sheet):
 
   <label>Personal Access Token (for testing only)</label>
   <input id="gh-token" type="password" placeholder="paste a token with repo access" />
-  <div class="muted">Token is stored in memory only while the page is open.</div>
+  <div class="muted">Token is stored in memory only while the page is open. We'll replace this later with proper OAuth/GitHub App flow.</div>
 </div>
 
-<form id="data-form" style="margin-top:14px">
-  <!-- Form fields generated from your Excel headers -->
-  <label>Comp Brand Name*</label>
-  <input name="Comp Brand Name*" type="text" />
-
-  <label>Comp Store Name*</label>
-  <input name="Comp Store Name*" type="text" />
-
-  <label>SKU*</label>
-  <input name="SKU*" type="text" />
-
-  <label>Comp DESIGN/TYPE</label>
-  <input name="Comp DESIGN/TYPE" type="text" />
-
-  <label>ASIN*</label>
-  <input name="ASIN*" type="text" />
-
-  <label>Link*</label>
-  <input name="Link*" type="text" />
-
-  <label>ASIN REV*</label>
-  <input name="ASIN REV*" type="text" />
-
-  <label>Variation?*</label>
-  <input name="Variation?*" type="text" />
-
-  <label>LISTING REV*</label>
-  <input name="LISTING REV*" type="text" />
-
-  <label>Comp RANK*</label>
-  <input name="Comp RANK*" type="text" />
-
-  <label>Product Short Name*</label>
-  <input name="Product Short Name*" type="text" />
-
-  <label>Price*</label>
-  <input name="Price*" type="text" />
-
-  <label>Coupon %*</label>
-  <input name="Coupon %*" type="text" />
-
-  <label>Coupon PRICE*</label>
-  <input name="Coupon PRICE*" type="text" />
-
-  <label>Price After Coupon*</label>
-  <input name="Price After Coupon*" type="text" />
-
-  <label>Junior Listing Owner*</label>
-  <input name="Junior Listing Owner*" type="text" />
-
-  <label>Senior Listing Owner*</label>
-  <input name="Senior Listing Owner*" type="text" />
-
-  <div class="row">
-    <div class="col">
-      <button id="submit-btn" type="button">Submit (save to GitHub)</button>
-    </div>
-    <div class="col muted" style="align-self:center">
-      <div>Saved files go to: <code>data/entries/&lt;timestamp&gt;-&lt;slug&gt;.json</code></div>
-    </div>
+<!-- AUTH PANEL: sign in / register -->
+<div id="auth-panel" class="card">
+  <h3>Sign in / Register (GitHub-only)</h3>
+  <div class="small muted">Enter your email to continue (this will check data/users/&lt;email&gt;.json in the repo).</div>
+  <div style="display:flex;gap:8px;margin-top:8px">
+    <input id="auth-email" placeholder="you@example.com" />
+    <button id="auth-check" type="button">Continue</button>
   </div>
-</form>
+  <div id="auth-area" style="margin-top:12px"></div>
+  <div id="auth-status" class="status" style="display:none"></div>
+</div>
 
-<div id="status" class="status" style="display:none"></div>
+<!-- EMAIL-FORM (hidden until sign-in) + main data form -->
+<div id="forms" style="display:none">
+  <div class="card">
+    <h3>Submit Listing (Junior)</h3>
+    <form id="data-form" style="margin-top:8px">
+      <input name="submitterEmail" id="submitterEmail" type="hidden" />
+      <!-- Fields -->
+      <label>Comp Brand Name*</label><input name="Comp Brand Name*" type="text" />
+      <label>Comp Store Name*</label><input name="Comp Store Name*" type="text" />
+      <label>SKU*</label><input name="SKU*" type="text" />
+      <label>Comp DESIGN/TYPE</label><input name="Comp DESIGN/TYPE" type="text" />
+      <label>ASIN*</label><input name="ASIN*" type="text" />
+      <label>Link*</label><input name="Link*" type="text" />
+      <label>ASIN REV*</label><input name="ASIN REV*" type="text" />
+      <label>Variation?*</label><input name="Variation?*" type="text" />
+      <label>LISTING REV*</label><input name="LISTING REV*" type="text" />
+      <label>Comp RANK*</label><input name="Comp RANK*" type="text" />
+      <label>Product Short Name*</label><input name="Product Short Name*" type="text" />
+      <label>Price*</label><input name="Price*" type="text" />
+      <label>Coupon %*</label><input name="Coupon %*" type="text" />
+      <label>Coupon PRICE*</label><input name="Coupon PRICE*" type="text" />
+      <label>Price After Coupon*</label><input name="Price After Coupon*" type="text" />
+      <label>Junior Listing Owner* (your GitHub username or email)</label><input name="Junior Listing Owner*" type="text" />
+      <label>Senior Listing Owner* (senior's GitHub username for assignment)</label><input name="Senior Listing Owner*" type="text" />
+
+      <div class="row">
+        <div class="col">
+          <button id="submit-btn" type="button">Submit (save to GitHub & create Issue)</button>
+        </div>
+        <div class="col muted" style="align-self:center">
+          <div>Saved files go to: <code>data/entries/&lt;timestamp&gt;-&lt;slug&gt;.json</code></div>
+        </div>
+      </div>
+    </form>
+    <div id="submit-status" class="status" style="display:none"></div>
+  </div>
+
+  <!-- Reviewer panel -->
+  <div class="card" id="reviewer-card" style="display:none">
+    <h3>Reviewer Panel (Senior)</h3>
+    <div class="small muted">Paste your PAT above. Click "Load pending entries". Approve/Reject will update entry file and comment on the linked Issue.</div>
+    <div style="margin-top:8px">
+      <button id="load-pending" class="btn-ghost">Load pending entries</button>
+    </div>
+    <div id="pending-list" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<div id="global-status" class="status" style="display:none"></div>
 
 <script>
-(function(){
-  // helpers
-  function el(selector){return document.querySelector(selector)}
-  function showStatus(msg, isError){ const s=el('#status'); s.style.display='block'; s.style.background=isError? '#ffecec' : '#eef7ff'; s.textContent=msg; }
-  function slugify(s){ return (s||'entry').toString().toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
-  function nowTs(){ return new Date().toISOString().replace(/[:.]/g,'-') }
+/* Full client-side GitHub-only flow.
+   Uses:
+   - data/users/<email>.json  -> user accounts (passwordHash + salt + role)
+   - data/entries/<timestamp>-<slug>.json -> submissions (status: Pending/Approved/Rejected)
+   - GitHub Issues -> created on submit and commented on decision
+   IMPORTANT: For testing you must paste a PAT with repo access above.
+*/
 
-  async function submit() {
-    const owner = el('#gh-owner').value.trim();
-    const repo = el('#gh-repo').value.trim();
-    const token = el('#gh-token').value.trim();
+(async function(){
+  // --- helpers
+  const qs = s => document.querySelector(s);
+  const show = (sel, msg, err=false) => { const el = qs(sel); el.style.display='block'; el.textContent = msg; el.style.background = err? '#ffecec' : '#eef7ff'; };
+  const hide = sel => { const el = qs(sel); if(el) el.style.display='none'; };
+  const nowTs = ()=> new Date().toISOString().replace(/[:.]/g,'-');
+  const slugify = s => (s||'entry').toString().toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+  const b64 = s => btoa(unescape(encodeURIComponent(s)));
+  const fromB64 = s => decodeURIComponent(escape(atob(s.replace(/\n/g,''))));
+  async function sha256Hex(str){ const utf = new TextEncoder().encode(str); const hash = await crypto.subtle.digest('SHA-256', utf); return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
 
-    if(!owner || !repo || !token){ showStatus('Please enter GitHub owner, repo and token.', true); return; }
+  function ownerRepoCheck(){
+    const owner = qs('#gh-owner').value.trim();
+    const repo = qs('#gh-repo').value.trim();
+    const token = qs('#gh-token').value.trim();
+    if(!owner || !repo || !token) throw new Error('Set GitHub owner, repo and PAT at top.');
+    return { owner, repo, token };
+  }
 
-    // collect form values
-    const form = document.getElementById('data-form');
-    const data = {};
-    Array.from(form.elements).forEach(inp => {
-      if(!inp.name) return;
-      data[inp.name] = inp.value || '';
-    });
+  async function ghGet(path){
+    const { owner, repo, token } = ownerRepoCheck();
+    const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodeURIComponent(path)}`;
+    const r = await fetch(url, { headers: { Authorization:'token ' + token, Accept:'application/vnd.github.v3+json' }});
+    if(!r.ok) throw r;
+    return r.json();
+  }
+  async function ghPut(path, message, content_b64, sha){
+    const { owner, repo, token } = ownerRepoCheck();
+    const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodeURIComponent(path)}`;
+    const body = { message, content: content_b64 };
+    if(sha) body.sha = sha;
+    const r = await fetch(url, { method:'PUT', headers:{ Authorization:'token ' + token, Accept:'application/vnd.github.v3+json' }, body: JSON.stringify(body) });
+    if(!r.ok) throw r;
+    return r.json();
+  }
+  async function ghPostIssues(title, body, assignees){
+    const { owner, repo, token } = ownerRepoCheck();
+    const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues`;
+    const r = await fetch(url, { method:'POST', headers:{ Authorization:'token ' + token, Accept:'application/vnd.github.v3+json' }, body: JSON.stringify({ title, body, assignees }) });
+    if(!r.ok) throw r;
+    return r.json();
+  }
+  async function ghPostIssueComment(number, bodyText){
+    const { owner, repo, token } = ownerRepoCheck();
+    const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/${number}/comments`;
+    const r = await fetch(url, { method:'POST', headers:{ Authorization:'token ' + token, Accept:'application/vnd.github.v3+json' }, body: JSON.stringify({ body: bodyText }) });
+    if(!r.ok) throw r;
+    return r.json();
+  }
+  async function ghListDir(path){
+    const { owner, repo, token } = ownerRepoCheck();
+    const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodeURIComponent(path)}`;
+    const r = await fetch(url, { headers:{ Authorization:'token ' + token, Accept:'application/vnd.github.v3+json' }});
+    if(!r.ok) throw r;
+    return r.json();
+  }
 
-    // filename and path
-    const title = data['Product Short Name*'] || data['Comp Brand Name*'] || 'entry';
-    const filename = nowTs() + '-' + slugify(title) + '.json';
-    const path = 'data/entries/' + filename;
-
-    // payload
-    const payload = { _meta:{ createdAt: new Date().toISOString(), createdBy: data['Junior Listing Owner*'] || '' }, data };
-
-    const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
-
-    const url = 'https://api.github.com/repos/' + encodeURIComponent(owner) + '/' + encodeURIComponent(repo) + '/contents/' + encodeURIComponent(path);
-
-    showStatus('Saving to GitHub: ' + path + ' ...');
-    try {
-      const res = await fetch(url, {
-        method: 'PUT',
-        headers: {
-          Authorization: 'token ' + token,
-          Accept: 'application/vnd.github.v3+json'
-        },
-        body: JSON.stringify({
-          message: 'Add entry: ' + title,
-          content: content
-        })
-      });
-      const txt = await res.text();
-      if(!res.ok){
-        // show GitHub error
-        let err = txt;
-        try { err = JSON.parse(txt).message || txt } catch(e){}
-        showStatus('GitHub error: ' + err, true);
-        return;
+  // --- auth UI logic
+  qs('#auth-check').addEventListener('click', async ()=>{
+    hide('#auth-status');
+    const emailEl = qs('#auth-email');
+    const email = (emailEl.value || '').trim().toLowerCase();
+    const token = qs('#gh-token').value.trim();
+    if(!email || !email.includes('@')) { show('#auth-status','Enter a valid email',true); return; }
+    if(!token) { show('#auth-status','Enter PAT at top (testing only)',true); return; }
+    qs('#auth-area').innerHTML = 'Checking account...';
+    try{
+      const path = `data/users/${encodeURIComponent(email)}.json`;
+      let userFile = null;
+      try{ userFile = await ghGet(path); } catch(e){ userFile = null; }
+      if(userFile && userFile.content){
+        // login form
+        qs('#auth-area').innerHTML = `
+          <div>Account found for <strong>${email}</strong></div>
+          <label>Password</label><input id="auth-pass" type="password" />
+          <button id="auth-login">Sign in</button>
+        `;
+        qs('#auth-login').addEventListener('click', async ()=>{
+          show('#auth-status','Verifying...');
+          try{
+            const raw = fromB64(userFile.content);
+            const j = JSON.parse(raw);
+            const pass = qs('#auth-pass').value || '';
+            const ph = await sha256Hex(pass + (j.salt||''));
+            if(ph === j.passwordHash){
+              window.__loggedInUser = { email, role: j.role || 'junior' };
+              show('#auth-status','Signed in as ' + email);
+              // reveal forms
+              qs('#auth-panel').style.display='none';
+              qs('#forms').style.display='block';
+              qs('#submitterEmail').value = email;
+              // populate Junior Listing Owner with email
+              const juniorInput = document.querySelector('input[name="Junior Listing Owner*"]');
+              if(juniorInput) juniorInput.value = email;
+              // reveal reviewer if senior
+              if((j.role||'').toLowerCase()==='senior') qs('#reviewer-card').style.display='block';
+            } else show('#auth-status','Wrong password', true);
+          }catch(err){ show('#auth-status','Error verifying: '+err.message, true); }
+        });
+      } else {
+        // register form
+        qs('#auth-area').innerHTML = `
+          <div>No account for <strong>${email}</strong>. Register:</div>
+          <label>Create password</label><input id="reg-pass" type="password" />
+          <label>Confirm password</label><input id="reg-pass2" type="password" />
+          <label>Role (junior/senior)</label><input id="reg-role" value="junior" />
+          <button id="reg-create">Create account</button>
+        `;
+        qs('#reg-create').addEventListener('click', async ()=>{
+          const p1 = qs('#reg-pass').value || '';
+          const p2 = qs('#reg-pass2').value || '';
+          const role = (qs('#reg-role').value || 'junior').toLowerCase();
+          if(!p1 || p1 !== p2){ show('#auth-status','Passwords empty or do not match',true); return; }
+          try{
+            show('#auth-status','Creating account...');
+            const salt = Math.random().toString(36).slice(2,10);
+            const passwordHash = await sha256Hex(p1 + salt);
+            const payload = { email, passwordHash, salt, role, createdAt: new Date().toISOString() };
+            const content = b64(JSON.stringify(payload, null,2));
+            await ghPut(`data/users/${encodeURIComponent(email)}.json`, 'Create user ' + email, content);
+            window.__loggedInUser = { email, role };
+            show('#auth-status','Account created. Signed in.');
+            qs('#auth-panel').style.display='none';
+            qs('#forms').style.display='block';
+            qs('#submitterEmail').value = email;
+            const juniorInput = document.querySelector('input[name="Junior Listing Owner*"]');
+            if(juniorInput) juniorInput.value = email;
+            if(role === 'senior') qs('#reviewer-card').style.display='block';
+          }catch(err){ show('#auth-status','Create failed: '+err.message, true); }
+        });
       }
-      const j = JSON.parse(txt);
-      showStatus('Saved. Commit: ' + (j.commit && j.commit.sha ? j.commit.sha : 'unknown'));
-      // clear form (keep junior name)
-      const junior = data['Junior Listing Owner*'];
-      Array.from(form.elements).forEach(inp => { if(inp.name) inp.value = (inp.name === 'Junior Listing Owner*' ? junior : '') });
-    } catch (err) {
-      showStatus('Network/other error: ' + err.message, true);
+    }catch(err){ show('#auth-status','Error: '+err.message, true); }
+  });
+
+  // --- submit flow (create entry file, create issue, update entry with issue number)
+  qs('#submit-btn').addEventListener('click', async ()=>{
+    hide('#submit-status'); hide('#global-status');
+    try{
+      const { owner, repo, token } = ownerRepoCheck();
+      show('#submit-status','Preparing submission...');
+      const form = qs('#data-form');
+      const data = {};
+      Array.from(form.elements).forEach(inp => { if(inp.name) data[inp.name] = inp.value || ''; });
+      // ensure junior email set
+      if(!data['Junior Listing Owner*']) data['Junior Listing Owner*'] = window.__loggedInUser?.email || '';
+      const title = data['Product Short Name*'] || data['Comp Brand Name*'] || 'entry';
+      const filename = nowTs() + '-' + slugify(title) + '.json';
+      const path = 'data/entries/' + filename;
+      // initial payload
+      const payload = { _meta:{ createdAt: new Date().toISOString(), createdBy: data['Junior Listing Owner*'] || '' }, status: 'Pending', data };
+      const content = b64(JSON.stringify(payload, null,2));
+      show('#submit-status','Saving entry to repo: ' + path);
+      // create file
+      let createRes = null;
+      try{
+        createRes = await ghPut(path, 'Add entry: ' + title, content);
+      }catch(err){ show('#submit-status','Create file failed: '+err.message, true); return; }
+      // create issue to notify senior (use Senior Listing Owner* as assignee if provided)
+      const seniorUsername = (data['Senior Listing Owner*'] || '').trim();
+      const issueTitle = 'Approval Request: ' + title;
+      const issueBody = `A new entry was submitted by **${data['Junior Listing Owner*'] || 'junior'}**.\n\n**Summary**:\n${(data['Product Short Name*']||'')}\n\nEntry file: ${path}\n\nPlease review and comment APPROVE or REJECT.`;
+      let issue = null;
+      try{
+        issue = await ghPostIssues(issueTitle, issueBody, seniorUsername ? [seniorUsername] : []);
+      }catch(err){ /* continue even if issue creation fails */ console.warn('Issue create failed', err); }
+      // update entry file to include issue number (if created)
+      if(issue && issue.number){
+        const entryFile = await ghGet(path);
+        const raw = fromB64(entryFile.content);
+        const j = JSON.parse(raw);
+        j.issueNumber = issue.number;
+        j.issueUrl = issue.html_url;
+        const newContent = b64(JSON.stringify(j, null,2));
+        await ghPut(path, 'Attach issue #' + issue.number + ' to entry', newContent, entryFile.sha);
+      }
+      show('#submit-status', 'Saved. ' + (issue ? 'Issue created: #' + issue.number : 'No issue created (check PAT permissions).'));
+      // clear form except junior
+      const junior = data['Junior Listing Owner*'] || '';
+      Array.from(form.elements).forEach(inp=>{ if(inp.name) inp.value = (inp.name === 'Junior Listing Owner*' ? junior : '') });
+    }catch(err){ show('#submit-status','Error: '+err.message, true); }
+  });
+
+  // --- reviewer: load pending entries
+  qs('#load-pending').addEventListener('click', async ()=>{
+    hide('#global-status'); qs('#pending-list').innerHTML = 'Loading...';
+    try{
+      // list files under data/entries
+      const list = await ghListDir('data/entries').catch(e=>{ throw new Error('Could not list data/entries. Make sure folder exists and PAT has access.'); });
+      // filter JSON files
+      const jsonFiles = Array.isArray(list) ? list.filter(i=>i.type==='file' && i.name.endsWith('.json')) : [];
+      const pending = [];
+      for(const f of jsonFiles){
+        try{
+          const file = await ghGet('data/entries/' + f.name);
+          const raw = fromB64(file.content);
+          const j = JSON.parse(raw);
+          if(j.status === 'Pending') pending.push({ name: f.name, path: 'data/entries/' + f.name, sha: file.sha, entry: j });
+        }catch(e){ /* skip parse errors */ }
+      }
+      if(pending.length === 0){ qs('#pending-list').innerHTML = '<div class="small muted">No pending entries found.</div>'; return; }
+      qs('#pending-list').innerHTML = '';
+      pending.forEach((p, idx)=>{
+        const d = p.entry.data || {};
+        const container = document.createElement('div'); container.className='entry';
+        container.innerHTML = `
+          <div><strong>${d['Product Short Name*'] || d['Comp Brand Name*'] || p.name}</strong> — ${p.name}</div>
+          <div class="small">Submitted by: ${p.entry._meta?.createdBy || 'unknown'} — Created: ${p.entry._meta?.createdAt || ''}</div>
+          <div style="margin-top:6px">${Object.keys(d).slice(0,6).map(k=>`<div><strong>${k}:</strong> ${d[k]}</div>`).join('')}</div>
+          <div style="margin-top:8px">
+            <button class="approve" data-idx="${idx}">Approve</button>
+            <button class="reject" data-idx="${idx}" style="margin-left:8px;background:#d33">Reject</button>
+          </div>
+        `;
+        qs('#pending-list').appendChild(container);
+
+        // bind actions
+        container.querySelector('.approve').addEventListener('click', async ()=>{
+          await decide(p, 'Approved');
+        });
+        container.querySelector('.reject').addEventListener('click', async ()=>{
+          await decide(p, 'Rejected');
+        });
+      });
+      // show reviewer card
+      qs('#reviewer-card').style.display='block';
+    }catch(err){
+      qs('#pending-list').innerHTML = '';
+      show('#global-status','Load failed: '+err.message, true);
+    }
+  });
+
+  // decide function: update entry file status + comment on issue
+  async function decide(p, decision){
+    try{
+      show('#global-status', `${decision} in progress...`);
+      // fetch latest file to get sha
+      const file = await ghGet(p.path);
+      const raw = fromB64(file.content);
+      const j = JSON.parse(raw);
+      j.status = decision;
+      j.decidedBy = window.__loggedInUser?.email || 'senior';
+      j.decisionAt = new Date().toISOString();
+      const newContent = b64(JSON.stringify(j, null,2));
+      await ghPut(p.path, `${decision}: ${p.name}`, newContent, file.sha);
+      // post comment on issue if present
+      if(j.issueNumber){
+        const msg = `Entry ${p.name} has been **${decision}** by ${j.decidedBy}.`;
+        await ghPostIssueComment(j.issueNumber, msg).catch(e=>console.warn('Comment failed', e));
+      }
+      show('#global-status', `${decision} done for ${p.name}`);
+      // refresh pending list
+      qs('#load-pending').click();
+    }catch(err){
+      show('#global-status','Decision failed: '+err.message, true);
     }
   }
 
-  el('#submit-btn').addEventListener('click', submit);
+  // helper to check owner/repo/token set
+  function ownerRepoCheck(){
+    const owner = qs('#gh-owner').value.trim();
+    const repo = qs('#gh-repo').value.trim();
+    const token = qs('#gh-token').value.trim();
+    if(!owner || !repo || !token) throw new Error('Enter GitHub owner, repo and PAT at top.');
+    return { owner, repo, token };
+  }
+
+  // show/hide reviewer panel based on logged-in user role if already logged in
+  // (no-op on load; after signin/register we toggle reviewer display if senior)
 })();
 </script>
 </body>
