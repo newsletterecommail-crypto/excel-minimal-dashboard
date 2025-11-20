@@ -3,7 +3,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Excel -> GitHub Webform (Full) - GitHub Inputs Hidden</title>
+  <title>Excel -> GitHub Webform (Full) - Admin Toggle</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:18px;max-width:980px}
@@ -19,9 +19,6 @@
     code{background:#f4f4f5;padding:2px 4px;border-radius:4px}
     .btn-ghost{background:#eee;color:#222}
     .entry{border:1px solid #ddd;padding:8px;border-radius:6px;margin-top:8px}
-
-    /* HIDE GitHub config UI while keeping inputs in DOM for internal use */
-    #gh-card, #gh-note { display: none !important; }
   </style>
 </head>
 <body>
@@ -34,6 +31,12 @@
 -->
 
 <h1>Excel → GitHub Webform (with Sign-up & Approval)</h1>
+
+<!-- Reveal admin button (so admins can enter owner/repo/PAT when needed) -->
+<div style="margin-top:8px">
+  <button id="reveal-admin" class="btn-ghost" type="button">Show admin settings</button>
+</div>
+
 <div id="gh-note" class="small muted">Everything is GitHub-only. For testing paste a GitHub Personal Access Token (PAT) with `repo` scope. Keep repo private in production.</div>
 
 <div class="card" id="gh-card">
@@ -127,16 +130,26 @@
   const nowTs = ()=> new Date().toISOString().replace(/[:.]/g,'-');
   const slugify = s => (s||'entry').toString().toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
   const b64 = s => btoa(unescape(encodeURIComponent(s)));
-  const fromB64 = s => decodeURIComponent(escape(atob(s.replace(/\n/g,''))));
+  const fromB64 = s => decodeURIComponent(escape(atob(s.replace(/
+/g,''))));
   async function sha256Hex(str){ const utf = new TextEncoder().encode(str); const hash = await crypto.subtle.digest('SHA-256', utf); return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
 
-  function ownerRepoCheck(){
-    const owner = qs('#gh-owner')?.value?.trim() || '';
-    const repo = qs('#gh-repo')?.value?.trim() || '';
-    const token = qs('#gh-token')?.value?.trim() || '';
-    if(!owner || !repo || !token) throw new Error('Set GitHub owner, repo and PAT in hidden fields (or reveal GitHub settings).');
-    return { owner, repo, token };
-  }
+  // --- Admin reveal toggle (so page initially hides GitHub admin settings)
+  (function(){
+    const btn = document.getElementById('reveal-admin');
+    if(!btn) return;
+    btn.addEventListener('click', () => {
+      const ghCard = document.getElementById('gh-card');
+      const ghNote = document.getElementById('gh-note');
+      const nowShown = ghCard.style.display !== 'none' && ghCard.style.display !== '';
+      // toggle: if currently visible hide, else show
+      if(nowShown){ ghCard.style.display = 'none'; if(ghNote) ghNote.style.display = 'none'; btn.textContent = 'Show admin settings'; }
+      else { ghCard.style.display = 'block'; if(ghNote) ghNote.style.display = 'block'; btn.textContent = 'Hide admin settings'; const tok = document.getElementById('gh-token'); if(tok) tok.focus(); }
+    });
+    // start hidden
+    const startCard = document.getElementById('gh-card'); const startNote = document.getElementById('gh-note');
+    if(startCard) startCard.style.display = 'none'; if(startNote) startNote.style.display = 'none';
+  })();
 
   async function ghGet(path){
     const { owner, repo, token } = ownerRepoCheck();
@@ -183,8 +196,6 @@
     const email = (emailEl.value || '').trim().toLowerCase();
     const token = qs('#gh-token')?.value?.trim() || '';
     if(!email || !email.includes('@')) { show('#auth-status','Enter a valid email',true); return; }
-    // token may be empty if you plan to only use local features; show a friendly message
-    if(!token) { /* don't force showing PAT - keep signup flow available */ }
     qs('#auth-area').innerHTML = 'Checking account...';
     try{
       const path = `data/users/${encodeURIComponent(email)}.json`;
@@ -239,6 +250,16 @@
             const passwordHash = await sha256Hex(p1 + salt);
             const payload = { email, passwordHash, salt, role, createdAt: new Date().toISOString() };
             const content = b64(JSON.stringify(payload, null,2));
+
+            // Ensure admin settings are provided (owner/repo/PAT)
+            const ownerVal = qs('#gh-owner')?.value?.trim() || '';
+            const repoVal = qs('#gh-repo')?.value?.trim() || '';
+            const tokenVal = qs('#gh-token')?.value?.trim() || '';
+            if(!ownerVal || !repoVal || !tokenVal){
+              show('#auth-status', 'Cannot create account: enter GitHub owner, repo and PAT first. Click "Show admin settings" to reveal these fields.', true);
+              return;
+            }
+
             await ghPut(`data/users/${encodeURIComponent(email)}.json`, 'Create user ' + email, content);
             window.__loggedInUser = { email, role };
             show('#auth-status','Account created. Signed in.');
@@ -280,7 +301,14 @@
       // create issue to notify senior (use Senior Listing Owner* as assignee if provided)
       const seniorUsername = (data['Senior Listing Owner*'] || '').trim();
       const issueTitle = 'Approval Request: ' + title;
-      const issueBody = `A new entry was submitted by **${data['Junior Listing Owner*'] || 'junior'}**.\n\n**Summary**:\n${(data['Product Short Name*']||'')}\n\nEntry file: ${path}\n\nPlease review and comment APPROVE or REJECT.`;
+      const issueBody = `A new entry was submitted by **${data['Junior Listing Owner*'] || 'junior'}**.
+
+**Summary**:
+${(data['Product Short Name*']||'')}
+
+Entry file: ${path}
+
+Please review and comment APPROVE or REJECT.`;
       let issue = null;
       try{
         issue = await ghPostIssues(issueTitle, issueBody, seniorUsername ? [seniorUsername] : []);
@@ -386,8 +414,6 @@
     return { owner, repo, token };
   }
 
-  // show/hide reviewer panel based on logged-in user role if already logged in
-  // (no-op on load; after signin/register we toggle reviewer display if senior)
 })();
 </script>
 </body>
