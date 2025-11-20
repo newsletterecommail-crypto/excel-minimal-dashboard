@@ -19,7 +19,9 @@
     code{background:#f4f4f5;padding:2px 4px;border-radius:4px}
     .btn-ghost{background:#eee;color:#222}
     .entry{border:1px solid #ddd;padding:8px;border-radius:6px;margin-top:8px}
-  </style>
+    /* reveal-admin clickable */
+  #reveal-admin { cursor:pointer; position:relative; z-index:9999; user-select:none; }
+</style>
 </head>
 <body>
 
@@ -34,7 +36,22 @@
 
 <!-- Reveal admin button (so admins can enter owner/repo/PAT when needed) -->
 <div style="margin-top:8px">
-  <button id="reveal-admin" class="btn-ghost" type="button">Show admin settings</button>
+  <button id="reveal-admin" class="btn-ghost" type="button"
+  onclick="(function(btn){
+    const ghCard = document.getElementById('gh-card');
+    const ghNote = document.getElementById('gh-note');
+    const isVisible = ghCard && ghCard.style.display === 'block';
+    if(isVisible){
+      if(ghCard) ghCard.style.display = 'none';
+      if(ghNote) ghNote.style.display = 'none';
+      btn.textContent = 'Show admin settings';
+    } else {
+      if(ghCard) ghCard.style.display = 'block';
+      if(ghNote) ghNote.style.display = 'block';
+      btn.textContent = 'Hide admin settings';
+      const tok = document.getElementById('gh-token'); if(tok) tok.focus();
+    }
+  })(this)">Show admin settings</button>
 </div>
 
 <div id="gh-note" class="small muted">Everything is GitHub-only. For testing paste a GitHub Personal Access Token (PAT) with `repo` scope. Keep repo private in production.</div>
@@ -114,6 +131,14 @@
 <div id="global-status" class="status" style="display:none"></div>
 
 <script>
+// ensure admin fields hidden on load
+(function(){
+  const ghCard = document.getElementById('gh-card');
+  const ghNote = document.getElementById('gh-note');
+  if(ghCard) ghCard.style.display = 'none';
+  if(ghNote) ghNote.style.display = 'none';
+})();
+
 /* Full client-side GitHub-only flow.
    Uses:
    - data/users/<email>.json  -> user accounts (passwordHash + salt + role)
