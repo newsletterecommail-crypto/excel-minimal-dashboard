@@ -20,8 +20,8 @@
     .btn-ghost{background:#eee;color:#222}
     .entry{border:1px solid #ddd;padding:8px;border-radius:6px;margin-top:8px}
     /* reveal-admin clickable */
-  #reveal-admin { cursor:pointer; position:relative; z-index:9999; user-select:none; }
-</style>
+    #reveal-admin { cursor:pointer; position:relative; z-index:9999; user-select:none; }
+  </style>
 </head>
 <body>
 
@@ -155,8 +155,7 @@
   const nowTs = ()=> new Date().toISOString().replace(/[:.]/g,'-');
   const slugify = s => (s||'entry').toString().toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
   const b64 = s => btoa(unescape(encodeURIComponent(s)));
-  const fromB64 = s => decodeURIComponent(escape(atob(s.replace(/
-/g,''))));
+  const fromB64 = s => decodeURIComponent(escape(atob(s.replace(/\n/g,''))));
   async function sha256Hex(str){ const utf = new TextEncoder().encode(str); const hash = await crypto.subtle.digest('SHA-256', utf); return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
 
   // --- Admin reveal toggle (so page initially hides GitHub admin settings)
