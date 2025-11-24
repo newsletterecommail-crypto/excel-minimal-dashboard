@@ -2,400 +2,657 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Listing Webform + Dashboard (GitHub-only)</title>
+  <title>Listing Webform (no login) + Dashboard</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:18px;max-width:980px}
-    label{display:block;margin-top:10px;font-weight:600}
-    input[type=text], input[type=password], textarea, select{width:100%;padding:8px;margin-top:6px;border:1px solid #ddd;border-radius:6px}
-    button{margin-top:12px;padding:10px 14px;border-radius:8px;border:0;background:#0b6df0;color:#fff;cursor:pointer}
-    .muted{color:#666;font-size:13px}
-    .row{display:flex;gap:10px}
-    .col{flex:1}
-    .status{margin-top:10px;padding:8px;border-radius:6px;background:#f3f4f6}
-    .card{border:1px solid #eee;padding:12px;border-radius:8px;margin-top:12px}
-    .small{font-size:13px;color:#555}
-    code{background:#f4f4f5;padding:2px 4px;border-radius:4px}
-    .btn-ghost{background:#eee;color:#222}
-    table{border-collapse:collapse;width:100%;font-size:13px}
-    th,td{border:1px solid #ddd;padding:6px;text-align:left}
-    th{background:#f3f4f6}
-    #reveal-admin { cursor:pointer; position:relative; z-index:9999; user-select:none; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      margin: 0;
+      background: #f5f5f8;
+      color: #111827;
+    }
+    .page {
+      max-width: 1000px;
+      margin: 24px auto 40px;
+      padding: 0 16px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      gap: 8px;
+    }
+    h1 {
+      font-size: 22px;
+      margin: 0;
+    }
+    .sub {
+      font-size: 13px;
+      color: #6b7280;
+    }
+    button, input, textarea, select {
+      font-family: inherit;
+    }
+    .btn {
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      padding: 6px 14px;
+      font-size: 13px;
+      background: #ffffff;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary {
+      background: #111827;
+      color: white;
+      border-color: #111827;
+    }
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 12px;
+    }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+    .pill-switch {
+      display: inline-flex;
+      border-radius: 999px;
+      background: #e5e7eb;
+      padding: 3px;
+      gap: 4px;
+    }
+    .pill-switch button {
+      border-radius: 999px;
+      border: none;
+      background: transparent;
+      padding: 4px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .pill-switch button.active {
+      background: white;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.07);
+      padding: 18px 18px 20px;
+      margin-bottom: 18px;
+    }
+    .card h2 {
+      font-size: 16px;
+      margin: 0 0 4px;
+    }
+    .card p {
+      margin: 0 0 14px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+    .field {
+      margin-bottom: 12px;
+    }
+    input[type="text"],
+    input[type="email"],
+    input[type="number"],
+    textarea {
+      width: 100%;
+      padding: 7px 9px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      font-size: 13px;
+      box-sizing: border-box;
+      background: #f9fafb;
+    }
+    input:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #111827;
+      background: #ffffff;
+    }
+    textarea {
+      min-height: 70px;
+      resize: vertical;
+    }
+    .hint {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 2px;
+    }
+    .required::after {
+      content: " *";
+      color: #ef4444;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .status {
+      font-size: 13px;
+      margin-top: 6px;
+    }
+    .status.ok {
+      color: #16a34a;
+    }
+    .status.err {
+      color: #dc2626;
+    }
+
+    /* Dashboard */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    th, td {
+      padding: 6px 8px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: #6b7280;
+      background: #f9fafb;
+    }
+    tr:hover td {
+      background: #f3f4f6;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #eef2ff;
+      font-size: 11px;
+      color: #4338ca;
+    }
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .muted {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .admin-toggle {
+      font-size: 12px;
+      color: #6b7280;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .admin-panel {
+      margin-top: 6px;
+      border-radius: 10px;
+      border: 1px dashed #d1d5db;
+      padding: 10px 12px 12px;
+      background: #f9fafb;
+    }
+    .admin-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 10px 14px;
+    }
+
+    @media (max-width: 640px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .dashboard-header {
+        align-items: flex-start;
+      }
+    }
   </style>
-  <!-- Chart.js for dashboard chart -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-
-<h1>Listing Webform (no login) + Dashboard</h1>
-
-<!-- Admin toggle -->
-<div style="margin-top:8px">
-  <button id="reveal-admin" class="btn-ghost" type="button"
-    onclick="(function(btn){
-      const ghCard = document.getElementById('gh-card');
-      const ghNote = document.getElementById('gh-note');
-      const shown = ghCard && ghCard.style.display === 'block';
-      if(shown){
-        if(ghCard) ghCard.style.display='none';
-        if(ghNote) ghNote.style.display='none';
-        btn.textContent='Show admin settings';
-      } else {
-        if(ghCard) ghCard.style.display='block';
-        if(ghNote) ghNote.style.display='block';
-        btn.textContent='Hide admin settings';
-        const tok = document.getElementById('gh-token'); if(tok) tok.focus();
-      }
-    })(this)">Show admin settings</button>
-</div>
-
-<div id="gh-note" class="small muted">
-  Enter GitHub owner, repo and a Personal Access Token (PAT) with <code>repo</code> scope.
-  The PAT stays in your browser only. Do not share it publicly.
-</div>
-
-<div class="card" id="gh-card">
-  <label>GitHub owner / org (your username)</label>
-  <input id="gh-owner" type="text" placeholder="your-github-username-or-org" />
-
-  <label>Repository name</label>
-  <input id="gh-repo" type="text" placeholder="your-repo" />
-
-  <label>Personal Access Token (with repo scope)</label>
-  <input id="gh-token" type="password" placeholder="paste a token with repo access" />
-  <div class="muted">
-    Used only in the browser to call GitHub API. Not stored on a server.
-  </div>
-</div>
-
-<!-- FORM + DASHBOARD -->
-<div id="forms">
-  <!-- FORM -->
-  <div class="card">
-    <h3>Submit Listing</h3>
-    <div class="small muted">
-      Anyone can fill this form. On submit, a JSON file is saved to
-      <code>data/entries/&lt;timestamp&gt;-&lt;slug&gt;.json</code> in the repo.
-    </div>
-    <form id="data-form" style="margin-top:8px">
-      <label>Your name / email (for reference)</label>
-      <input name="submitter" id="submitter" type="text" />
-
-      <label>Comp Brand Name*</label><input name="Comp Brand Name*" type="text" />
-      <label>Comp Store Name*</label><input name="Comp Store Name*" type="text" />
-      <label>SKU*</label><input name="SKU*" type="text" />
-      <label>Comp DESIGN/TYPE</label><input name="Comp DESIGN/TYPE" type="text" />
-      <label>ASIN*</label><input name="ASIN*" type="text" />
-      <label>Link*</label><input name="Link*" type="text" />
-      <label>ASIN REV*</label><input name="ASIN REV*" type="text" />
-      <label>Variation?*</label><input name="Variation?*" type="text" />
-      <label>LISTING REV*</label><input name="LISTING REV*" type="text" />
-      <label>Comp RANK*</label><input name="Comp RANK*" type="text" />
-      <label>Product Short Name*</label><input name="Product Short Name*" type="text" />
-      <label>Price*</label><input name="Price*" type="text" />
-      <label>Coupon %*</label><input name="Coupon %*" type="text" />
-      <label>Coupon PRICE*</label><input name="Coupon PRICE*" type="text" />
-      <label>Price After Coupon*</label><input name="Price After Coupon*" type="text" />
-
-      <div class="row">
-        <div class="col">
-          <button id="submit-btn" type="button">Submit (save to GitHub)</button>
-        </div>
-        <div class="col muted" style="align-self:center">
-          Saved files go to:
-          <code>data/entries/&lt;timestamp&gt;-&lt;slug&gt;.json</code>
+  <div class="page">
+    <header>
+      <div>
+        <h1>Listing Webform (no login)</h1>
+        <div class="sub">Junior fills form → JSON saved to GitHub → Dashboard for senior review.</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="pill-switch" aria-label="View switch">
+          <button id="tab-entry" class="active" type="button">New Entry</button>
+          <button id="tab-dashboard" type="button">Dashboard</button>
         </div>
       </div>
-    </form>
-    <div id="submit-status" class="status" style="display:none"></div>
+    </header>
+
+    <!-- ENTRY VIEW -->
+    <section id="entry-view">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <div>
+            <h2>Submit Listing</h2>
+            <p>Simple form for junior listing owners. No login required.</p>
+          </div>
+          <button id="entry-submit-btn" class="btn btn-primary" form="listing-form" type="submit">
+            Save to GitHub
+          </button>
+        </div>
+
+        <form id="listing-form">
+          <!-- Keep / add all your fields here -->
+          <div class="field">
+            <label for="refName">Your name / email (for reference)</label>
+            <input id="refName" name="refName" type="text" placeholder="e.g. Neha / neha@brand.com" />
+          </div>
+
+          <div class="field">
+            <label class="required" for="compBrandName">Comp Brand Name</label>
+            <input id="compBrandName" name="compBrandName" type="text" required />
+          </div>
+
+          <div class="field">
+            <label class="required" for="compStoreName">Comp Store Name</label>
+            <input id="compStoreName" name="compStoreName" type="text" required />
+          </div>
+
+          <div class="field">
+            <label class="required" for="sku">SKU</label>
+            <input id="sku" name="sku" type="text" required />
+            <div class="hint">Used in the file name so seniors can identify quickly.</div>
+          </div>
+
+          <div class="field">
+            <label for="designType">Comp DESIGN / TYPE</label>
+            <input id="designType" name="designType" type="text" />
+          </div>
+
+          <div class="field">
+            <label for="asin">ASIN</label>
+            <input id="asin" name="asin" type="text" />
+          </div>
+
+          <!-- TODO: Add all your remaining columns/fields below exactly as you like -->
+
+          <div class="field">
+            <label for="notes">Notes for senior (optional)</label>
+            <textarea id="notes" name="notes" placeholder="Anything special senior should know"></textarea>
+          </div>
+        </form>
+
+        <div id="entry-status" class="status"></div>
+
+        <!-- ADMIN (HIDDEN BY DEFAULT) -->
+        <div style="margin-top:16px;border-top:1px dashed #e5e7eb;padding-top:8px;">
+          <div id="admin-toggle" class="admin-toggle">
+            <span>⚙️ Admin setup (for repo owner only)</span>
+          </div>
+          <div id="admin-panel" class="admin-panel hidden">
+            <div class="admin-grid">
+              <div class="field">
+                <label for="ghOwner">GitHub owner / org</label>
+                <input id="ghOwner" type="text" placeholder="your-github-username" />
+                <div class="hint">Example: newsletterecommail</div>
+              </div>
+              <div class="field">
+                <label for="ghRepo">Repository name</label>
+                <input id="ghRepo" type="text" placeholder="your-repo" />
+              </div>
+              <div class="field">
+                <label for="ghToken">Personal Access Token (repo scope)</label>
+                <input id="ghToken" type="password" placeholder="••••••••" autocomplete="off" />
+                <div class="hint">
+                  Stored only in this browser (localStorage). Do not share publicly.
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <button id="saveAdmin" class="btn btn-sm btn-primary" type="button">Save settings</button>
+              <button id="clearAdmin" class="btn btn-sm" type="button">Clear from this browser</button>
+              <span id="admin-status" class="status"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DASHBOARD VIEW -->
+    <section id="dashboard-view" class="hidden">
+      <div class="card">
+        <div class="dashboard-header">
+          <div>
+            <h2>Dashboard</h2>
+            <p class="muted">
+              Senior listing owners can see all JSON entries saved in
+              <code>data/entries/</code> of the repo.
+            </p>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button id="refreshBtn" class="btn btn-sm" type="button">Refresh</button>
+            <button id="newEntryBtn" class="btn btn-sm btn-primary" type="button">
+              + New listing
+            </button>
+          </div>
+        </div>
+
+        <div class="muted" id="dashboard-summary" style="margin-bottom:10px;"></div>
+
+        <div style="overflow:auto;max-height:480px;border-radius:10px;border:1px solid #e5e7eb;">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Brand</th>
+                <th>Store</th>
+                <th>SKU / ASIN</th>
+                <th>Created by</th>
+                <th>Raw JSON</th>
+              </tr>
+            </thead>
+            <tbody id="dashboard-body">
+              <!-- rows injected via JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="dashboard-status" class="status"></div>
+      </div>
+    </section>
   </div>
 
-  <!-- DASHBOARD -->
-  <div class="card" id="dashboard-card">
-    <h3>Dashboard (all entries)</h3>
-    <div class="small muted">
-      Uses the same PAT to read files under <code>data/entries/</code>. Anyone with this page + PAT can refresh.
-    </div>
-
-    <div style="margin-top:8px">
-      <button id="dash-refresh" class="btn-ghost" type="button">Refresh dashboard</button>
-    </div>
-
-    <div id="dash-status" class="status" style="display:none"></div>
-
-    <div id="dash-summary" style="margin-top:8px">
-      <div>Total entries: <strong><span id="dash-total">0</span></strong></div>
-      <div>Average price: <strong><span id="dash-avgprice">-</span></strong></div>
-    </div>
-
-    <div style="margin-top:12px">
-      <canvas id="dash-price-chart" height="200"></canvas>
-    </div>
-
-    <div style="margin-top:12px;max-height:260px;overflow:auto">
-      <table>
-        <thead>
-          <tr>
-            <th>Created At</th>
-            <th>Product Short Name</th>
-            <th>Brand</th>
-            <th>Price</th>
-            <th>Comp Store</th>
-            <th>SKU</th>
-          </tr>
-        </thead>
-        <tbody id="dash-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<div id="global-status" class="status" style="display:none"></div>
-
-<script>
-// Hide admin card on load
-(function(){
-  const ghCard = document.getElementById('gh-card');
-  const ghNote = document.getElementById('gh-note');
-  if(ghCard) ghCard.style.display = 'none';
-  if(ghNote) ghNote.style.display = 'none';
-})();
-
-/* Simple GitHub-only app:
-   - Anyone can submit form
-   - Each submit writes JSON under data/entries/
-   - Dashboard reads all entries and shows:
-       • total count
-       • average Price*
-       • bar chart of Price* by Product Short Name
-       • table of entries
-*/
-
-(async function(){
-  // --- helpers
-  const qs = s => document.querySelector(s);
-  const show = (sel, msg, err=false) => {
-    const el = qs(sel);
-    if(!el) return;
-    el.style.display='block';
-    el.textContent = msg;
-    el.style.background = err ? '#ffecec' : '#eef7ff';
-  };
-  const hide = sel => { const el = qs(sel); if(el) el.style.display='none'; };
-  const nowTs = ()=> new Date().toISOString().replace(/[:.]/g,'-');
-  const slugify = s => (s||'entry').toString().toLowerCase().trim()
-                      .replace(/[^a-z0-9]+/g,'-')
-                      .replace(/(^-|-$)/g,'');
-  const b64 = s => btoa(unescape(encodeURIComponent(s)));
-  const fromB64 = s => decodeURIComponent(escape(atob(s.replace(/\n/g,''))));
-
-  function ownerRepoCheck(){
-    const owner = qs('#gh-owner')?.value?.trim() || '';
-    const repo  = qs('#gh-repo')?.value?.trim() || '';
-    const token = qs('#gh-token')?.value?.trim() || '';
-    if(!owner || !repo || !token) {
-      throw new Error('Enter GitHub owner, repo and PAT in "admin settings" at the top.');
-    }
-    return { owner, repo, token };
-  }
-
-  async function ghGet(path){
-    const { owner, repo, token } = ownerRepoCheck();
-    const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodeURIComponent(path)}`;
-    const r = await fetch(url, { headers: { Authorization:'token ' + token, Accept:'application/vnd.github.v3+json' }});
-    if(!r.ok) throw r;
-    return r.json();
-  }
-
-  async function ghPut(path, message, content_b64, sha){
-    const { owner, repo, token } = ownerRepoCheck();
-    const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodeURIComponent(path)}`;
-    const body = { message, content: content_b64 };
-    if(sha) body.sha = sha;
-    const r = await fetch(url, {
-      method:'PUT',
-      headers:{ Authorization:'token ' + token, Accept:'application/vnd.github.v3+json' },
-      body: JSON.stringify(body)
-    });
-    if(!r.ok) throw r;
-    return r.json();
-  }
-
-  async function ghListDir(path){
-    const { owner, repo, token } = ownerRepoCheck();
-    const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodeURIComponent(path)}`;
-    const r = await fetch(url, { headers:{ Authorization:'token ' + token, Accept:'application/vnd.github.v3+json' }});
-    if(!r.ok) throw r;
-    return r.json();
-  }
-
-  // --- Submit listing
-  qs('#submit-btn').addEventListener('click', async ()=>{
-    hide('#submit-status'); hide('#global-status');
-    try{
-      ownerRepoCheck(); // throws if missing
-      show('#submit-status','Preparing submission...');
-
-      const form = qs('#data-form');
-      const data = {};
-      Array.from(form.elements).forEach(inp => {
-        if(inp.name) data[inp.name] = inp.value || '';
-      });
-
-      const title = data['Product Short Name*'] || data['Comp Brand Name*'] || 'entry';
-      const filename = nowTs() + '-' + slugify(title) + '.json';
-      const path = 'data/entries/' + filename;
-
-      const payload = {
-        _meta:{
-          createdAt: new Date().toISOString(),
-          createdBy: data['submitter'] || ''
-        },
-        data
+  <script>
+    // ---------- Helpers ----------
+    function getAdminConfig() {
+      return {
+        owner: localStorage.getItem("ghOwner") || "",
+        repo: localStorage.getItem("ghRepo") || "",
+        token: localStorage.getItem("ghToken") || "",
       };
+    }
 
-      const content = b64(JSON.stringify(payload, null, 2));
-      show('#submit-status','Saving entry to repo: ' + path);
+    function setStatus(el, msg, type) {
+      if (!el) return;
+      el.textContent = msg || "";
+      el.classList.remove("ok", "err");
+      if (type === "ok") el.classList.add("ok");
+      if (type === "err") el.classList.add("err");
+    }
 
-      try{
-        await ghPut(path, 'Add entry: ' + title, content);
-      }catch(err){
-        const msg = (err && err.status) ? `Create file failed (HTTP ${err.status}). Check repo / PAT.` : 'Create file failed.';
-        show('#submit-status', msg, true);
-        return;
+    function slugify(str) {
+      return (str || "")
+        .toString()
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    }
+
+    // ---------- UI wiring ----------
+    document.addEventListener("DOMContentLoaded", () => {
+      const entryView = document.getElementById("entry-view");
+      const dashboardView = document.getElementById("dashboard-view");
+      const tabEntry = document.getElementById("tab-entry");
+      const tabDashboard = document.getElementById("tab-dashboard");
+
+      const entrySubmitBtn = document.getElementById("entry-submit-btn");
+      const form = document.getElementById("listing-form");
+      const entryStatus = document.getElementById("entry-status");
+
+      const adminToggle = document.getElementById("admin-toggle");
+      const adminPanel = document.getElementById("admin-panel");
+      const ghOwner = document.getElementById("ghOwner");
+      const ghRepo = document.getElementById("ghRepo");
+      const ghToken = document.getElementById("ghToken");
+      const saveAdmin = document.getElementById("saveAdmin");
+      const clearAdmin = document.getElementById("clearAdmin");
+      const adminStatus = document.getElementById("admin-status");
+
+      const refreshBtn = document.getElementById("refreshBtn");
+      const newEntryBtn = document.getElementById("newEntryBtn");
+      const dashboardBody = document.getElementById("dashboard-body");
+      const dashboardStatus = document.getElementById("dashboard-status");
+      const dashboardSummary = document.getElementById("dashboard-summary");
+
+      // Load saved admin settings
+      const cfg = getAdminConfig();
+      ghOwner.value = cfg.owner;
+      ghRepo.value = cfg.repo;
+      ghToken.value = cfg.token;
+
+      // View switch
+      function showEntry() {
+        entryView.classList.remove("hidden");
+        dashboardView.classList.add("hidden");
+        tabEntry.classList.add("active");
+        tabDashboard.classList.remove("active");
       }
+      function showDashboard() {
+        entryView.classList.add("hidden");
+        dashboardView.classList.remove("hidden");
+        tabDashboard.classList.add("active");
+        tabEntry.classList.remove("active");
+        loadDashboard();
+      }
+      tabEntry.addEventListener("click", showEntry);
+      tabDashboard.addEventListener("click", showDashboard);
+      newEntryBtn.addEventListener("click", showEntry);
 
-      show('#submit-status','Saved successfully.');
-
-      // Keep submitter, clear other fields
-      const submitterKeep = data['submitter'] || '';
-      Array.from(form.elements).forEach(inp=>{
-        if(!inp.name) return;
-        if(inp.name === 'submitter') inp.value = submitterKeep;
-        else inp.value = '';
+      // Admin panel toggle
+      adminToggle.addEventListener("click", () => {
+        adminPanel.classList.toggle("hidden");
       });
 
-      // Refresh dashboard
-      try { await loadDashboard(); } catch(e){ console.warn('Dashboard refresh failed', e); }
+      saveAdmin.addEventListener("click", () => {
+        localStorage.setItem("ghOwner", ghOwner.value.trim());
+        localStorage.setItem("ghRepo", ghRepo.value.trim());
+        localStorage.setItem("ghToken", ghToken.value.trim());
+        setStatus(adminStatus, "Saved in this browser.", "ok");
+        setTimeout(() => setStatus(adminStatus, "", ""), 2500);
+      });
 
-    }catch(err){
-      show('#submit-status','Error: ' + (err.message || err), true);
-    }
-  });
+      clearAdmin.addEventListener("click", () => {
+        localStorage.removeItem("ghOwner");
+        localStorage.removeItem("ghRepo");
+        localStorage.removeItem("ghToken");
+        ghOwner.value = "";
+        ghRepo.value = "";
+        ghToken.value = "";
+        setStatus(adminStatus, "Cleared from this browser.", "ok");
+        setTimeout(() => setStatus(adminStatus, "", ""), 2500);
+      });
 
-  // --- DASHBOARD LOGIC ---
-  let dashChart = null;
+      // ----------- FORM SUBMIT -> GITHUB -----------
+      async function handleSubmit(e) {
+        if (e) e.preventDefault();
+        setStatus(entryStatus, "");
+        entrySubmitBtn.disabled = true;
 
-  async function loadDashboard(){
-    hide('#dash-status');
-    const statusEl = qs('#dash-status');
-    const tbody = qs('#dash-tbody');
-    if(tbody) tbody.innerHTML = '';
-    try{
-      ownerRepoCheck(); // ensure admin filled owner/repo/token
+        const cfg = getAdminConfig();
+        if (!cfg.owner || !cfg.repo || !cfg.token) {
+          setStatus(entryStatus, "Admin setup missing. Open ⚙️ Admin setup and fill owner, repo, token.", "err");
+          entrySubmitBtn.disabled = false;
+          return;
+        }
 
-      if(statusEl){ statusEl.style.display='block'; statusEl.textContent='Loading dashboard data...'; statusEl.style.background='#eef7ff'; }
+        const formData = new FormData(form);
+        const dataObj = {};
+        formData.forEach((value, key) => {
+          dataObj[key] = value;
+        });
+        dataObj.__submittedAt = new Date().toISOString();
 
-      // list files
-      const list = await ghListDir('data/entries')
-        .catch(e=>{ throw new Error('Could not list data/entries. Make sure folder exists and PAT has repo access.'); });
+        const sku = dataObj.sku || dataObj.SKU || "";
+        const brand = dataObj.compBrandName || dataObj.brand || "";
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const slugPart = slugify(sku || brand || "entry");
+        const fileName = `${timestamp}-${slugPart}.json`;
+        const path = `data/entries/${fileName}`;
 
-      const jsonFiles = Array.isArray(list)
-        ? list.filter(i=>i.type === 'file' && i.name.endsWith('.json'))
-        : [];
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(dataObj, null, 2))));
 
-      const allEntries = [];
-      for(const f of jsonFiles){
-        try{
-          const file = await ghGet('data/entries/' + f.name);
-          const raw = fromB64(file.content);
-          const j = JSON.parse(raw);
-          allEntries.push({ name: f.name, ...j });
-        }catch(e){
-          console.warn('Skip invalid entry', f.name, e);
+        try {
+          const res = await fetch(
+            `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${encodeURIComponent(path)}`,
+            {
+              method: "PUT",
+              headers: {
+                "Authorization": "token " + cfg.token,
+                "Accept": "application/vnd.github+json",
+              },
+              body: JSON.stringify({
+                message: `Add listing entry ${fileName}`,
+                content,
+              }),
+            }
+          );
+
+          if (!res.ok) {
+            const text = await res.text();
+            throw new Error(text || "GitHub API error");
+          }
+
+          form.reset();
+          setStatus(entryStatus, "Saved to GitHub. Opening dashboard…", "ok");
+
+          // Switch to dashboard and refresh
+          showDashboard();
+        } catch (err) {
+          console.error(err);
+          setStatus(entryStatus, "Error saving to GitHub. Check repo, token, and console.", "err");
+        } finally {
+          entrySubmitBtn.disabled = false;
         }
       }
 
-      // Summary stats
-      const total = allEntries.length;
-      const prices = allEntries
-        .map(e => parseFloat(e.data?.['Price*'] || e.data?.Price || ''))
-        .filter(v => !isNaN(v) && v>0);
+      form.addEventListener("submit", handleSubmit);
+      entrySubmitBtn.addEventListener("click", handleSubmit);
 
-      const avgPrice = prices.length
-        ? (prices.reduce((a,b)=>a+b,0) / prices.length)
-        : null;
+      // ----------- DASHBOARD LOAD -----------
+      async function loadDashboard() {
+        setStatus(dashboardStatus, "Loading from GitHub…");
+        dashboardBody.innerHTML = "";
+        dashboardSummary.textContent = "";
 
-      qs('#dash-total').textContent = total;
-      qs('#dash-avgprice').textContent = avgPrice ? avgPrice.toFixed(2) : '-';
+        const cfg = getAdminConfig();
+        if (!cfg.owner || !cfg.repo || !cfg.token) {
+          setStatus(dashboardStatus, "Admin setup missing. Open ⚙️ Admin setup and fill owner, repo, token.", "err");
+          return;
+        }
 
-      // Table rows
-      if(tbody){
-        allEntries
-          .sort((a,b) => (a._meta?.createdAt || '').localeCompare(b._meta?.createdAt || ''))
-          .forEach(e=>{
-            const d = e.data || {};
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-              <td>${e._meta?.createdAt || ''}</td>
-              <td>${d['Product Short Name*'] || ''}</td>
-              <td>${d['Comp Brand Name*'] || ''}</td>
-              <td>${d['Price*'] || ''}</td>
-              <td>${d['Comp Store Name*'] || ''}</td>
-              <td>${d['SKU*'] || ''}</td>
-            `;
-            tbody.appendChild(tr);
-          });
-      }
+        try {
+          const res = await fetch(
+            `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/data/entries`,
+            {
+              headers: {
+                "Authorization": "token " + cfg.token,
+                "Accept": "application/vnd.github+json",
+              },
+            }
+          );
 
-      // Chart: price by product short name (last 20 entries)
-      const ctx = document.getElementById('dash-price-chart');
-      if(window.Chart && ctx){
-        const chartData = allEntries
-          .filter(e => !isNaN(parseFloat(e.data?.['Price*'] || '')))
-          .slice(-20); // last 20
-        const labels = chartData.map(e => e.data?.['Product Short Name*'] || e.name);
-        const dataVals = chartData.map(e => parseFloat(e.data?.['Price*'] || '0'));
-
-        if(dashChart){ dashChart.destroy(); }
-        dashChart = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels,
-            datasets: [{
-              label: 'Price',
-              data: dataVals,
-            }]
-          },
-          options: {
-            responsive:true,
-            plugins:{ legend:{ display:false } },
-            scales:{ y:{ beginAtZero:true } }
+          if (res.status === 404) {
+            setStatus(dashboardStatus, "Folder data/entries not found. Create it once by submitting a form.", "err");
+            return;
           }
-        });
+
+          if (!res.ok) {
+            const text = await res.text();
+            throw new Error(text || "GitHub API error");
+          }
+
+          const files = await res.json();
+          if (!Array.isArray(files) || files.length === 0) {
+            setStatus(dashboardStatus, "No entries yet. Ask junior to submit the first listing.", "ok");
+            return;
+          }
+
+          // Sort newest first by name (timestamp prefix)
+          files.sort((a, b) => (a.name < b.name ? 1 : -1));
+
+          let count = 0;
+          for (const file of files) {
+            if (!file.name.endsWith(".json")) continue;
+
+            const fileRes = await fetch(file.download_url, {
+              headers: { "Accept": "application/json" },
+            });
+
+            let json;
+            try {
+              json = await fileRes.json();
+            } catch {
+              json = null;
+            }
+
+            const tr = document.createElement("tr");
+
+            const submittedAt = (json && json.__submittedAt) || "";
+            const dateCell = document.createElement("td");
+            dateCell.textContent = submittedAt ? submittedAt.replace("T", " ").replace("Z", "") : file.name.slice(0, 19);
+            tr.appendChild(dateCell);
+
+            const brandCell = document.createElement("td");
+            brandCell.textContent = (json && (json.compBrandName || json.brand)) || "";
+            tr.appendChild(brandCell);
+
+            const storeCell = document.createElement("td");
+            storeCell.textContent = (json && (json.compStoreName || json.store)) || "";
+            tr.appendChild(storeCell);
+
+            const skuCell = document.createElement("td");
+            const sku = json && (json.sku || json.SKU || "");
+            const asin = json && (json.asin || json.ASIN || "");
+            skuCell.textContent = [sku, asin].filter(Boolean).join(" / ");
+            tr.appendChild(skuCell);
+
+            const refCell = document.createElement("td");
+            refCell.textContent = (json && (json.refName || json.junior || "")) || "";
+            tr.appendChild(refCell);
+
+            const linkCell = document.createElement("td");
+            const a = document.createElement("a");
+            a.href = file.html_url;
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+            a.textContent = "View JSON";
+            linkCell.appendChild(a);
+            tr.appendChild(linkCell);
+
+            dashboardBody.appendChild(tr);
+            count++;
+          }
+
+          dashboardSummary.textContent = `${count} listing entr${count === 1 ? "y" : "ies"} found.`;
+          setStatus(dashboardStatus, "Loaded successfully.", "ok");
+        } catch (err) {
+          console.error(err);
+          setStatus(dashboardStatus, "Error loading dashboard. See console for details.", "err");
+        }
       }
 
-      if(statusEl){ statusEl.textContent='Dashboard updated'; statusEl.style.background='#eef7ff'; }
+      refreshBtn.addEventListener("click", loadDashboard);
 
-    }catch(err){
-      if(statusEl){
-        statusEl.style.display='block';
-        statusEl.textContent = 'Dashboard error: ' + (err.message || err);
-        statusEl.style.background='#ffecec';
-      }
-    }
-  }
-
-  // Bind refresh button
-  qs('#dash-refresh').addEventListener('click', async ()=>{
-    await loadDashboard();
-  });
-
-  // Try to load dashboard once on page load (will show nice error if PAT not set yet)
-  try{ await loadDashboard(); }catch(e){ console.warn('Initial dashboard load failed (likely no PAT yet).', e); }
-
-})();
-</script>
-
+      // Start on entry view (simple form)
+      showEntry();
+    });
+  </script>
 </body>
 </html>
